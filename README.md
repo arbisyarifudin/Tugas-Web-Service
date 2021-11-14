@@ -48,7 +48,7 @@ ___
 
 
 ### Cara menjalankan?
-- Pasikan ```composer``` dan ```local webserver``` (xampp/wampp/dkk) sudah terinsal
+- Pastikan ```composer``` dan ```local webserver``` (xampp/wampp/dkk) sudah terinsal
 - Lalu,
 ```
 composer install
