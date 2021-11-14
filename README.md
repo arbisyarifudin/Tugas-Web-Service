@@ -1,4 +1,4 @@
-## UTS - WEB SERVICE
+## UTS - WEB SERVICE (Semester 5)
 ### Oleh : Arbi Syarifudin (12181630)
 
 ___
@@ -48,14 +48,18 @@ ___
 
 
 ### Cara menjalankan?
-- Pastikan ```composer``` dan ```local webserver``` (xampp/wampp/dkk) sudah terinsal
-- Lalu,
+- Pastikan ```composer``` dan ```local webserver``` (xampp/wampp/dkk) sudah terinstal
+- Jalankan ```local webserver```
+- Buat database baru dengan ```webservice_uts``` lalu import file ```webservice_uts.sql``` pada database tersebut
+- Jalankan command
 ```
 composer install
 ```
+- dan terakhir,
 ```
 php -S localhost:8080 -t public
 ```
+- Maka API sudah bisa dicoba di postman
 ___
 
 
