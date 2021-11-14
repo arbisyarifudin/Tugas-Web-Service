@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Validator;
 
 class ProdukController extends Controller
 {
@@ -18,12 +19,12 @@ class ProdukController extends Controller
       $produk[$key] = $item;
       $produk[$key]->_links = [
         [
-          'rel'   => 'detail produk',
+          'rel'   => 'Detail Produk',
           'href'  => '/api/produk/' . $item->id_produk,
           'type'  => 'GET'
         ],
         [
-          'rel'   => 'kategori',
+          'rel'   => 'Detail Kategori',
           'href'  => '/api/kategori/' . $item->id_kategori,
           'type'  => 'GET'
         ]
@@ -31,9 +32,8 @@ class ProdukController extends Controller
     }
 
     $data = [
-      'took'    => $_SERVER['REQUEST_TIME'],
       'code'    => 200,
-      'message' => 'Success',
+      'message' => 'Data s  emua Produk berhasil diambil!',
       'data'    => $produk,
     ];
 
@@ -47,9 +47,8 @@ class ProdukController extends Controller
 
     if ($query->count() < 1) {
       $data = [
-        'took'    => $_SERVER['REQUEST_TIME'],
         'code'    => 404,
-        'message' => 'Data not found!',
+        'message' => 'Data tidak ditemukan!',
       ];
       return response()->json($data, 404);
     }
@@ -60,15 +59,14 @@ class ProdukController extends Controller
     $produk->_links = [
       [
         'href'  => '/api/kategori/' . $produk->id_kategori,
-        'rel'   => 'kategori',
+        'rel'   => 'Detail Kategori',
         'type'  => 'GET'
       ]
     ];
 
     $data = [
-      'took'    => $_SERVER['REQUEST_TIME'],
       'code'    => 200,
-      'message' => 'Success',
+      'message' => 'Detail Produk berhasil diambil!',
       'data'    => $produk,
     ];
 
@@ -77,26 +75,34 @@ class ProdukController extends Controller
 
   public function tambah(Request $request) {
 
-    $this->validate($request, [
+    $validation = Validator::make($request->all(), [
       'nama_produk' => 'required|unique:tb_produk,nama_produk',
       'harga_produk' => 'required',
       'stok_produk' => 'required',
       'id_kategori' => 'required|exists:tb_kategori,id_kategori',
     ], $this->_error_messages());
 
+    if ($validation->fails())
+    {
+      return response()->json([
+        'code' => 422,
+        'message' => 'Invalid input!',
+        'errors' => $validation->errors()
+      ], 422);
+    }
+
     $data_baru = [
       'nama_produk' => $request->nama_produk,
       'harga_produk' => $request->harga_produk,
-      'stok_produk' => $request->stok_produk,
+      'stok_produk' => $request->stok_produk ? $request->stok_produk : 0,
       'id_kategori' => $request->id_kategori,
     ]; 
 
     DB::table('tb_produk')->insert($data_baru);
 
     $data = [
-      'took'    => $_SERVER['REQUEST_TIME'],
       'code'    => 201,
-      'message' => 'Data created successfully!',
+      'message' => 'Data produk berhasil ditambah!',
     ];
 
     return response()->json($data, 201);
@@ -105,12 +111,22 @@ class ProdukController extends Controller
   public function ubah(Request $request, $id)
   {
 
-    $this->validate($request, [
+    $validation = Validator::make($request->all(), [
       'nama_produk' => 'required|unique:tb_produk,nama_produk,' . $id . ',id_produk',
       'harga_produk' => 'required',
       'stok_produk' => 'required',
       'id_kategori' => 'required|exists:tb_kategori,id_kategori',
-    ], $this->_error_messages());
+    ],
+      $this->_error_messages()
+    );
+
+    if ($validation->fails()) {
+      return response()->json([
+        'code' => 422,
+        'message' => 'Invalid input!',
+        'errors' => $validation->errors()
+      ], 422);
+    }
 
     $data_ubah = [
       'nama_produk' => $request->nama_produk,
@@ -122,9 +138,8 @@ class ProdukController extends Controller
     DB::table('tb_produk')->where('id_produk', $id)->update($data_ubah);
 
     $data = [
-      'took'    => $_SERVER['REQUEST_TIME'],
       'code'    => 200,
-      'message' => 'Data updated successfully!',
+      'message' => 'Data produk berhasil diperbarui!',
     ];
 
     return response()->json($data, 200);
@@ -138,9 +153,8 @@ class ProdukController extends Controller
 
     if ($query->count() < 1) {
       $data = [
-        'took'    => $_SERVER['REQUEST_TIME'],
         'code'    => 404,
-        'message' => 'Data not found!',
+        'message' => 'Data produk tidak ditemukan!',
       ];
       return response()->json($data, 404);
     }
@@ -148,9 +162,8 @@ class ProdukController extends Controller
     $query->delete();
 
     $data = [
-      'took'    => $_SERVER['REQUEST_TIME'],
       'code'    => 200,
-      'message' => 'Data deleted successfully!',
+      'message' => 'Data produk berhasil dihapus!',
     ];
 
     return response()->json($data, 200);
