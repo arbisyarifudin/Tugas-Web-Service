@@ -33,7 +33,7 @@ class ProdukController extends Controller
 
     $data = [
       'code'    => 200,
-      'message' => 'Data s  emua Produk berhasil diambil!',
+      'message' => 'Data semua Produk berhasil diambil!',
       'data'    => $produk,
     ];
 
@@ -86,7 +86,7 @@ class ProdukController extends Controller
     {
       return response()->json([
         'code' => 422,
-        'message' => 'Invalid input!',
+        'message' => 'Permintaan tidak valid!',
         'errors' => $validation->errors()
       ], 422);
     }
@@ -123,7 +123,7 @@ class ProdukController extends Controller
     if ($validation->fails()) {
       return response()->json([
         'code' => 422,
-        'message' => 'Invalid input!',
+        'message' => 'Permintaan tidak valid!',
         'errors' => $validation->errors()
       ], 422);
     }
