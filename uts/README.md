@@ -1,4 +1,4 @@
-## UTS - WEB SERVICE (Semester 5)
+## UTS - WEB SERVICE
 ### Oleh : Arbi Syarifudin (12181630)
 
 ___
