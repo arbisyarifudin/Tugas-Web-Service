@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Validator;
 
@@ -87,24 +88,32 @@ class ProdukController extends Controller
       return response()->json($data, 404);
     }
 
+    
     $produk = $query->join('tb_kategori', 'tb_kategori.id_kategori', '=', 'tb_produk.id_kategori')
-              ->first();
+    ->first();
+    
+    
+    $etag = hash('sha256', $produk->tgl_diperbarui);
+    Cache::put($etag, $produk, 300);
+    
+    if (isset($_SERVER['HTTP_IF_NONE_MATCH']) && $_SERVER['HTTP_IF_NONE_MATCH'] == $etag) {
+      return response()->json([], 304, ['ETag' => $etag, 'Cache-Control' => 'must-revalidate']);
+    } else {
+      $produk->_links = [
+        [
+          'href'  => '/api/kategori/' . $produk->id_kategori,
+          'rel'   => 'Detail Kategori',
+          'type'  => 'GET'
+        ]
+      ];
+      $data = [
+        'code'    => 200,
+        'message' => 'Detail Produk berhasil diambil!',
+        'data'    => $produk,
+      ];
+      return response()->json($data, 200, ['ETag' => $etag, 'Cache-Control' => 'must-revalidate']);
+    }
 
-    $produk->_links = [
-      [
-        'href'  => '/api/kategori/' . $produk->id_kategori,
-        'rel'   => 'Detail Kategori',
-        'type'  => 'GET'
-      ]
-    ];
-
-    $data = [
-      'code'    => 200,
-      'message' => 'Detail Produk berhasil diambil!',
-      'data'    => $produk,
-    ];
-
-    return response()->json($data, 200);
   }
 
   public function tambah(Request $request) {
@@ -167,6 +176,7 @@ class ProdukController extends Controller
       'harga_produk' => $request->harga_produk,
       'stok_produk' => $request->stok_produk,
       'id_kategori' => $request->id_kategori,
+      'tgl_diperbarui' => date('Y-m-d H:i:s')
     ];
 
     DB::table('tb_produk')->where('id_produk', $id)->update($data_ubah);
