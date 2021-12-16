@@ -17,6 +17,10 @@ $router->get('/', function () use ($router) {
     return $router->app->version();
 });
 
+// AUTH
+$router->post('api/login', 'OtorisasiController@login');
+$router->post('api/register', 'OtorisasiController@register');
+
 // Produk
 $router->get('api/produk', 'ProdukController@tampil');
 $router->get('api/produk/{id}', 'ProdukController@detail');

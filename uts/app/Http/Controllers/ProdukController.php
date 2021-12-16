@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Validator;
@@ -11,33 +12,66 @@ class ProdukController extends Controller
 
   public function tampil()
   {
-    $produk = DB::table('tb_produk')
+
+    $authHeader = request()->header('Authorization');
+    $arr = explode(" ", $authHeader);
+    $jwt = isset($arr[1]) ? $arr[1] : "";
+    $secretkey = base64_encode("rahasia");
+
+    if ($jwt) {
+      try {
+        
+        $decoded = JWT::decode($jwt, $secretkey, ['HS256']);
+
+        $produk = DB::table('tb_produk')
               ->join('tb_kategori', 'tb_kategori.id_kategori', '=', 'tb_produk.id_kategori')
               ->get();
             
-    foreach ($produk as $key => $item) {
-      $produk[$key] = $item;
-      $produk[$key]->_links = [
-        [
-          'rel'   => 'Detail Produk',
-          'href'  => '/api/produk/' . $item->id_produk,
-          'type'  => 'GET'
-        ],
-        [
-          'rel'   => 'Detail Kategori',
-          'href'  => '/api/kategori/' . $item->id_kategori,
-          'type'  => 'GET'
-        ]
+        foreach ($produk as $key => $item) {
+          $produk[$key] = $item;
+          $produk[$key]->_links = [
+            [
+              'rel'   => 'Detail Produk',
+              'href'  => '/api/produk/' . $item->id_produk,
+              'type'  => 'GET'
+            ],
+            [
+              'rel'   => 'Detail Kategori',
+              'href'  => '/api/kategori/' . $item->id_kategori,
+              'type'  => 'GET'
+            ]
+          ];
+        }
+
+        $data = [
+          'code'    => 200,
+          'message' => 'Data semua Produk berhasil diambil!',
+          'data'    => $produk,
+        ];
+
+        return response()->json($data, 200);
+        
+      } catch (\Exception $e) {
+        
+        $data = [
+          'code'    => 401,
+          'message' => 'Akses dilarang!',
+          'data'    => null,
+        ];
+        
+        return response()->json($data, 201);
+      }
+    } else {
+      $data = [
+        'code'    => 401,
+        'message' => 'Akses dilarang!',
+        'data'    => null,
       ];
+      
+      return response()->json($data, 201);
     }
 
-    $data = [
-      'code'    => 200,
-      'message' => 'Data semua Produk berhasil diambil!',
-      'data'    => $produk,
-    ];
-
-    return response()->json($data, 200);
+    
   }
 
   public function detail($id)
