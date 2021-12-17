@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Firebase\JWT\JWT;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Validator;
 
@@ -11,26 +13,40 @@ class KategoriController extends Controller
 
   public function tampil()
   {
+  
     $kategori = DB::table('tb_kategori')->get();
-            
-    foreach ($kategori as $key => $item) {
-      $kategori[$key] = $item;
-      $kategori[$key]->_links = [
-        [
-          'rel'   => 'Detail kategori',
-          'href'  => '/api/kategori/' . $item->id_kategori,
-          'type'  => 'GET'
-        ]
+
+    $tgl_diperbarui = $kategori[0]->tgl_diperbarui;
+
+    $etag = hash('sha256', $tgl_diperbarui);
+
+    Cache::put($etag, $kategori, 300);
+
+    if (isset($_SERVER["HTTP_IF_NONE_MATCH"]) && $_SERVER["HTTP_IF_NONE_MATCH"] == $etag) {
+      return response('', 304, ['ETag' => $etag, 'Cache-Control' => 'must-revalidate']);
+    } else {
+
+      foreach ($kategori as $key => $item) {
+        $kategori[$key] = $item;
+        $kategori[$key]->_links = [
+          [
+            'rel'   => 'Detail kategori',
+            'href'  => '/api/kategori/' . $item->id_kategori,
+            'type'  => 'GET'
+          ]
+        ];
+      }
+  
+      $data = [
+        'code'    => 200,
+        'message' => 'Data semua kategori berhasil diambil!',
+        'data'    => $kategori,
       ];
+  
+      return response()->json($data, 200, ['ETag' => $etag, 'Cache-Control' => 'must-revalidate']);
     }
-
-    $data = [
-      'code'    => 200,
-      'message' => 'Data semua kategori berhasil diambil!',
-      'data'    => $kategori,
-    ];
-
-    return response()->json($data, 200);
+            
+   
   }
 
   public function detail($id)
@@ -72,14 +88,45 @@ class KategoriController extends Controller
       ], 422);
     }
 
-    DB::table('tb_kategori')->insert(['nama_kategori' => $request->nama_kategori]);
+    $authHeader = $request->header('Authorization');
+    // Bearer aksladdssdhd
+    $arr = explode(" ", $authHeader);
+    $jwt = isset($arr[1]) ? $arr[1] : "";
+    $secretkey = base64_encode("rahasia");
 
-    $data = [
-      'code'    => 201,
-      'message' => 'Data kategori berhasil ditambah!',
-    ];
+    if ($jwt) {
 
-    return response()->json($data, 201);
+      try {
+        
+        $decoded = JWT::decode($jwt, $secretkey, array("HS256"));
+    
+        DB::table('tb_kategori')->insert(['nama_kategori' => $request->nama_kategori]);
+    
+        $data = [
+          'code'    => 201,
+          'message' => 'Data kategori berhasil ditambah!',
+        ];
+    
+        return response()->json($data, 201);
+
+
+
+      } catch (\Exception $e) {
+        
+        return response()->json([
+          "code" => 401,
+          "message" => "Akses dilarang!",
+        ], 401);
+
+      }
+
+    } else {
+      return response()->json([
+        "code" => 401,
+        "message" => "Akses dilarang!",
+      ], 401);
+    }
+
   }
 
   public function ubah(Request $request, $id)
